@@ -46,9 +46,9 @@
 		<!-- Without Developer Mode, this key will need to be set with ClientToken from the app registered in Wearables Developer Center -->
 		<key>ClientToken</key>
 		<string>$(CLIENT_TOKEN)</string>
-		<!-- Without Developer Mode, this key will need to be set with your Apple Developer Team ID - Set this in Xcode under Signing & Capabilities -->
+		<!-- Apple Developer Team ID registered in Meta Wearables Developer Center -->
 		<key>TeamID</key>
-		<string>$(DEVELOPMENT_TEAM)</string>
+		<string>WY253UX7FC</string>
 	</dict>
 	<key>UIBackgroundModes</key>
 	<array>

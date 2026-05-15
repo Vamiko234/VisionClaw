@@ -26,6 +26,18 @@ jobs:
             samples/CameraAccess/CameraAccess/Secrets.swift.example \
             > samples/CameraAccess/CameraAccess/Secrets.swift
 
+      # Inject Meta DAT credentials into Info.plist at build time.
+      # META_APP_ID and CLIENT_TOKEN come from the Wearables Developer Center app registration.
+      - name: Inject Meta DAT credentials
+        env:
+          META_APP_ID: ${{ secrets.META_APP_ID }}
+          CLIENT_TOKEN: ${{ secrets.CLIENT_TOKEN }}
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :MWDAT:MetaAppID ${META_APP_ID}" \
+            samples/CameraAccess/CameraAccess/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :MWDAT:ClientToken ${CLIENT_TOKEN}" \
+            samples/CameraAccess/CameraAccess/Info.plist
+
       - name: Resolve Swift Packages
         working-directory: samples/CameraAccess
         run: |
