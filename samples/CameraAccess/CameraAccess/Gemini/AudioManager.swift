@@ -44,22 +44,21 @@ class AudioManager {
       try session.setCategory(
         .playAndRecord,
         mode: .voiceChat,
-        options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
+        options: [.allowBluetooth, .allowBluetoothHFP, .mixWithOthers]
       )
     } else {
       try session.setCategory(
         .playAndRecord,
         mode: .videoChat,
-        options: [.allowBluetoothHFP, .mixWithOthers, .defaultToSpeaker]
+        options: [.allowBluetoothHFP, .mixWithOthers]
       )
     }
     try session.setPreferredSampleRate(GeminiConfig.inputAudioSampleRate)
     try session.setPreferredIOBufferDuration(0.064)
     try session.setActive(true)
-    if SettingsManager.shared.speakerOutputEnabled {
-      try session.overrideOutputAudioPort(.speaker)
-      NSLog("[Audio] Speaker output override: ON (iPhone speaker)")
-    }
+    // Audio routes automatically to connected Bluetooth HFP device (e.g. Ray-Ban glasses).
+    // .defaultToSpeaker and overrideOutputAudioPort(.speaker) are intentionally omitted so
+    // iOS prefers HFP when the glasses are paired rather than falling back to the phone speaker.
     NSLog("[Audio] Session mode: %@", useIPhoneMode ? "voiceChat (iPhone)" : "videoChat (glasses)")
 
     setupInterruptionHandling()

@@ -18,6 +18,7 @@ class GeminiSessionViewModel: ObservableObject {
   private let eventClient = OpenClawEventClient()
   private var lastVideoFrameTime: Date = .distantPast
   private var stateObservation: Task<Void, Never>?
+  private var shortcutObserver: NSObjectProtocol?
 
   var streamingMode: StreamingMode = .glasses
 
@@ -163,6 +164,17 @@ class GeminiSessionViewModel: ObservableObject {
       return
     }
 
+    // Register for Shortcuts / AppIntents external trigger
+    shortcutObserver = NotificationCenter.default.addObserver(
+      forName: .askWhatAmILookingAt,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      Task { @MainActor [weak self] in
+        self?.askWhatAmILookingAt()
+      }
+    }
+
     // Connect to OpenClaw event stream for proactive notifications
     if SettingsManager.shared.proactiveNotificationsEnabled {
       eventClient.onNotification = { [weak self] text in
@@ -177,6 +189,10 @@ class GeminiSessionViewModel: ObservableObject {
   }
 
   func stopSession() {
+    if let obs = shortcutObserver {
+      NotificationCenter.default.removeObserver(obs)
+      shortcutObserver = nil
+    }
     eventClient.disconnect()
     toolCallRouter?.cancelAll()
     toolCallRouter = nil
@@ -190,6 +206,11 @@ class GeminiSessionViewModel: ObservableObject {
     userTranscript = ""
     aiTranscript = ""
     toolCallStatus = .idle
+  }
+
+  func askWhatAmILookingAt() {
+    guard isGeminiActive, connectionState == .ready else { return }
+    geminiService.sendTextMessage("What am I looking at? Describe it briefly and clearly.")
   }
 
   func sendVideoFrameIfThrottled(image: UIImage) {

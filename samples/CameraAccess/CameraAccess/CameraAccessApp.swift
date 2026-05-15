@@ -15,6 +15,7 @@
 // of DAT SDK integration including device registration, permissions, and media streaming.
 //
 
+import AppIntents
 import Foundation
 import MWDATCore
 import SwiftUI
@@ -70,5 +71,40 @@ struct CameraAccessApp: App {
       // Registration view handles the flow for connecting to the glasses via Meta AI
       RegistrationView(viewModel: wearablesViewModel)
     }
+  }
+}
+
+// MARK: - iOS Shortcuts / AppIntents
+
+extension Notification.Name {
+  static let askWhatAmILookingAt = Notification.Name("askWhatAmILookingAt")
+}
+
+struct AskVisionIntent: AppIntent {
+  static var title: LocalizedStringResource = "Ask What Am I Looking At"
+  static var description = IntentDescription(
+    "Asks Gemini to describe what the camera sees and speaks the response through your glasses."
+  )
+  static var openAppWhenRun: Bool = true
+
+  @MainActor
+  func perform() async throws -> some IntentResult {
+    NotificationCenter.default.post(name: .askWhatAmILookingAt, object: nil)
+    return .result()
+  }
+}
+
+struct VisionClawShortcuts: AppShortcutsProvider {
+  static var appShortcuts: [AppShortcut] {
+    AppShortcut(
+      intent: AskVisionIntent(),
+      phrases: [
+        "Ask \(.applicationName) what I'm looking at",
+        "What am I looking at in \(.applicationName)",
+        "Describe what I see in \(.applicationName)"
+      ],
+      shortTitle: "What Am I Looking At?",
+      systemImageName: "eye.circle"
+    )
   }
 }

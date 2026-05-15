@@ -1,0 +1,63 @@
+name: Build VisionClaw iOS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      # Inject the Gemini API key from GitHub Secrets into Secrets.swift at build time.
+      # The key never touches the repository — only lives in the runner environment.
+      - name: Generate Secrets.swift
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          sed "s/YOUR_GEMINI_API_KEY/${GEMINI_API_KEY}/g" \
+            samples/CameraAccess/CameraAccess/Secrets.swift.example \
+            > samples/CameraAccess/CameraAccess/Secrets.swift
+
+      - name: Resolve Swift Packages
+        working-directory: samples/CameraAccess
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project CameraAccess.xcodeproj \
+            -scheme CameraAccess
+
+      # Build unsigned. Sideloadly on Windows will re-sign with your Apple ID.
+      # Trying to sign here with a free account is fragile and unnecessary.
+      - name: Archive (unsigned)
+        working-directory: samples/CameraAccess
+        run: |
+          xcodebuild archive \
+            -project CameraAccess.xcodeproj \
+            -scheme CameraAccess \
+            -destination "generic/platform=iOS" \
+            -archivePath ../../build/VisionClaw.xcarchive \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_ALLOWED=NO \
+            DEVELOPMENT_TEAM=""
+
+      - name: Package as IPA
+        run: |
+          mkdir -p build/Payload
+          cp -r "build/VisionClaw.xcarchive/Products/Applications/CameraAccess.app" \
+            build/Payload/
+          cd build && zip -r VisionClaw-unsigned.ipa Payload/
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VisionClaw-unsigned
+          path: build/VisionClaw-unsigned.ipa
+          retention-days: 30

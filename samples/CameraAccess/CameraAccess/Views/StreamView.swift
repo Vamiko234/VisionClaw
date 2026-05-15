@@ -188,6 +188,16 @@ struct ControlsView: View {
       .opacity(webrtcVM.isActive ? 0.4 : 1.0)
       .disabled(webrtcVM.isActive)
 
+      // "What am I looking at?" — sends hardcoded vision prompt to Gemini
+      CircleButton(
+        icon: "eye.circle",
+        text: "Ask"
+      ) {
+        geminiVM.askWhatAmILookingAt()
+      }
+      .opacity(geminiVM.isGeminiActive ? 1.0 : 0.4)
+      .disabled(!geminiVM.isGeminiActive)
+
       // WebRTC Live Stream button (disabled when Gemini is active — audio conflict)
       CircleButton(
         icon: webrtcVM.isActive
