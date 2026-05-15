@@ -44,13 +44,13 @@ class AudioManager {
       try session.setCategory(
         .playAndRecord,
         mode: .voiceChat,
-        options: [.allowBluetooth, .allowBluetoothHFP, .mixWithOthers]
+        options: [.allowBluetooth, .mixWithOthers]
       )
     } else {
       try session.setCategory(
         .playAndRecord,
         mode: .videoChat,
-        options: [.allowBluetoothHFP, .mixWithOthers]
+        options: [.allowBluetooth, .mixWithOthers]
       )
     }
     try session.setPreferredSampleRate(GeminiConfig.inputAudioSampleRate)
