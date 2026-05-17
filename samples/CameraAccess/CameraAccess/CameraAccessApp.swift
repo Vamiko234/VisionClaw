@@ -85,7 +85,9 @@ struct AskVisionIntent: AppIntent {
   static var description = IntentDescription(
     "Asks Gemini to describe what the camera sees and speaks the response through your glasses."
   )
-  static var openAppWhenRun: Bool = true
+  // false: intent runs in the app's background process without bringing it to foreground,
+  // so it responds when the screen is off and the app is backgrounded with audio mode active.
+  static var openAppWhenRun: Bool = false
 
   @MainActor
   func perform() async throws -> some IntentResult {

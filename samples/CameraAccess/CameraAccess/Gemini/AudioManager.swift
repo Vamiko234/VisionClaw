@@ -56,9 +56,10 @@ class AudioManager {
     try session.setPreferredSampleRate(GeminiConfig.inputAudioSampleRate)
     try session.setPreferredIOBufferDuration(0.064)
     try session.setActive(true)
-    // Audio routes automatically to connected Bluetooth HFP device (e.g. Ray-Ban glasses).
-    // .defaultToSpeaker and overrideOutputAudioPort(.speaker) are intentionally omitted so
-    // iOS prefers HFP when the glasses are paired rather than falling back to the phone speaker.
+    // Pin I/O to Ray-Ban glasses HFP port when AirPods are also connected.
+    // HFP input and output are linked on the same BT device, so locking the preferred
+    // input to the glasses anchors output there too, preventing AirPods from taking over.
+    preferRayBanGlassesIfAvailable()
     NSLog("[Audio] Session mode: %@", useIPhoneMode ? "voiceChat (iPhone)" : "videoChat (glasses)")
 
     setupInterruptionHandling()
@@ -199,6 +200,22 @@ class AudioManager {
       }
     }
     removeObservers()
+  }
+
+  // MARK: - Audio Routing
+
+  private func preferRayBanGlassesIfAvailable() {
+    let session = AVAudioSession.sharedInstance()
+    guard let inputs = session.availableInputs else { return }
+    let glassesPort = inputs.first { port in
+      port.portType == .bluetoothHFP &&
+      (port.portName.localizedCaseInsensitiveContains("ray-ban") ||
+       port.portName.localizedCaseInsensitiveContains("rayban") ||
+       port.portName.localizedCaseInsensitiveContains("meta"))
+    }
+    guard let port = glassesPort else { return }
+    try? session.setPreferredInput(port)
+    NSLog("[Audio] Pinned HFP input/output to glasses: %@", port.portName)
   }
 
   // MARK: - Audio Interruption & Route Change Handling
