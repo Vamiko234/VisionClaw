@@ -15,6 +15,7 @@ class GeminiSessionViewModel: ObservableObject {
   private let openClawBridge = OpenClawBridge()
   private var toolCallRouter: ToolCallRouter?
   private let audioManager = AudioManager()
+  private let volumeTrigger = VolumeButtonTrigger()
   private let eventClient = OpenClawEventClient()
   private var lastVideoFrameTime: Date = .distantPast
   private var stateObservation: Task<Void, Never>?
@@ -175,6 +176,13 @@ class GeminiSessionViewModel: ObservableObject {
       }
     }
 
+    // Volume-down button trigger — fires askWhatAmILookingAt() when the session is active.
+    // Observation is scoped to this session so normal volume control is restored on stopSession().
+    volumeTrigger.onVolumeDown = { [weak self] in
+      self?.askWhatAmILookingAt()
+    }
+    volumeTrigger.start()
+
     // Connect to OpenClaw event stream for proactive notifications
     if SettingsManager.shared.proactiveNotificationsEnabled {
       eventClient.onNotification = { [weak self] text in
@@ -193,6 +201,7 @@ class GeminiSessionViewModel: ObservableObject {
       NotificationCenter.default.removeObserver(obs)
       shortcutObserver = nil
     }
+    volumeTrigger.stop()
     eventClient.disconnect()
     toolCallRouter?.cancelAll()
     toolCallRouter = nil
