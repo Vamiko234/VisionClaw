@@ -213,6 +213,11 @@ class GeminiSessionViewModel: ObservableObject {
     geminiService.sendTextMessage("What am I looking at? Describe it briefly and clearly.")
   }
 
+  func askSolveThisProblem() {
+    guard isGeminiActive, connectionState == .ready else { return }
+    geminiService.sendTextMessage("I just paused to ask you something. What problem or situation do you see? Walk me through how to solve or handle it.")
+  }
+
   func sendVideoFrameIfThrottled(image: UIImage) {
     guard SettingsManager.shared.videoStreamingEnabled else { return }
     guard isGeminiActive, connectionState == .ready else { return }

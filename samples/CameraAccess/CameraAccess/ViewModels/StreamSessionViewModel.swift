@@ -81,6 +81,7 @@ class StreamSessionViewModel: ObservableObject {
 
   // CPU-based CIContext for rendering decoded pixel buffers in background
   private let cpuCIContext = CIContext(options: [.useSoftwareRenderer: true])
+  private var previousStreamSessionState: StreamSessionState = .stopped
   // VideoDecoder for decompressing HEVC/H.264 frames in background
   private let videoDecoder = VideoDecoder()
   private var backgroundFrameCount = 0
@@ -329,6 +330,12 @@ class StreamSessionViewModel: ObservableObject {
   }
 
   private func updateStatusFromState(_ state: StreamSessionState) {
+    // Glasses double-tap pause: streaming → paused transition triggers problem-solving prompt
+    if state == .paused && previousStreamSessionState == .streaming {
+      geminiSessionVM?.askSolveThisProblem()
+    }
+    previousStreamSessionState = state
+
     switch state {
     case .stopped:
       currentVideoFrame = nil
